@@ -1,0 +1,4 @@
+localhost:2525 {
+    root * ./
+    file_server
+}
