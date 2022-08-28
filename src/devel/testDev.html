@@ -44,6 +44,15 @@
                 player.addEventListener(amp.eventName.downloadbitratechanged, function(){
                     console.log("downloadbitratechanged");
                 });
+                
+                player.addEventListener(amp.eventName.loadedmetadata, function(){
+                    console.log("loadedmetadata");
+                    console.log(Object.keys(player.currentVideoStreamList().streams[0]._commonStream._tracks));
+                    console.log(player.currentVideoStreamList().streams[0]._commonStream._tracks.length);
+                    player.currentVideoStreamList().streams[0]._commonStream._tracks.forEach(console.log);
+                });
+
+                
 
             });
         }).call(this);
