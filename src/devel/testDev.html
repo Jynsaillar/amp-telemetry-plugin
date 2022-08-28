@@ -21,23 +21,28 @@
                 init();
 
                 // Register needed event listeners
-                player.addEventListener("ended", function(){
-                    console.log("Reached end of media!");
-                });
-                player.addEventListener("seeking", function(){
-                    console.log("seeking...");
-                });
-                player.addEventListener("seeked", function(){
-                    console.log("seek done!");
-                });
-                player.addEventListener("pause", function(){
-                    console.log("pause!");
-                });
-                player.addEventListener("play", function(){
-                    console.log("play!");
-                });
-                player.addEventListener("suspend", function(){
-                    console.log("suspend!");
+                // player.addEventListener("ended", function(){
+                //     console.log("Reached end of media!");
+                // });
+                // player.addEventListener("seeking", function(){
+                //     console.log("seeking...");
+                // });
+                // player.addEventListener("seeked", function(){
+                //     console.log("seek done!");
+                // });
+                // player.addEventListener("pause", function(){
+                //     console.log("pause!");
+                // });
+                // player.addEventListener("play", function(){
+                //     console.log("play!");
+                // });
+                // player.addEventListener("suspend", function(){
+                //     console.log("suspend!");
+                // });
+                
+                // Figuring out which AMP event listeners exist in the first place and how to access them
+                player.addEventListener(amp.eventName.downloadbitratechanged, function(){
+                    console.log("downloadbitratechanged");
                 });
 
             });
