@@ -41,12 +41,19 @@
                 // });
                 
                 // Figuring out which AMP event listeners exist in the first place and how to access them
+                // List of events taken from here:
+                // https://github.com/Azure-Samples/azure-media-player-samples/blob/master/typescript/azuremediaplayer.d.ts
                 player.addEventListener(amp.eventName.downloadbitratechanged, function(){
                     console.log("downloadbitratechanged");
                 });
                 
+                // Listen on metadata state to extract stream frame sizes/available bitrates *after* they're available
+                // TODO: Current frame size should be readable from UI (DOM), player metadata or active stream tracks? Ask on Monday which
                 player.addEventListener(amp.eventName.loadedmetadata, function(){
                     console.log("loadedmetadata");
+                    // Beware that (...).streams array might be null/undefined, see here for elegant solution (view source):
+                    // https://amp.azure.net/libs/amp/latest/samples/dynamic_selectBitrate.html
+                    // TODO: Implement null check above
                     console.log(Object.keys(player.currentVideoStreamList().streams[0]._commonStream._tracks));
                     console.log(player.currentVideoStreamList().streams[0]._commonStream._tracks.length);
                     player.currentVideoStreamList().streams[0]._commonStream._tracks.forEach(console.log);
