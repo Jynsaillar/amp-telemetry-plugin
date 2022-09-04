@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
@@ -20,46 +21,41 @@
                 // initialize the plugin
                 init();
 
-                // Register needed event listeners
-                // player.addEventListener("ended", function(){
-                //     console.log("Reached end of media!");
-                // });
-                // player.addEventListener("seeking", function(){
-                //     console.log("seeking...");
-                // });
-                // player.addEventListener("seeked", function(){
-                //     console.log("seek done!");
-                // });
-                // player.addEventListener("pause", function(){
-                //     console.log("pause!");
-                // });
-                // player.addEventListener("play", function(){
-                //     console.log("play!");
-                // });
-                // player.addEventListener("suspend", function(){
-                //     console.log("suspend!");
-                // });
-                
+                pWidth = player.width();
+                pHeight = player.height();
+                console.log(`Player dimensions: ${pWidth}x${pHeight}`);
+
                 // Figuring out which AMP event listeners exist in the first place and how to access them
                 // List of events taken from here:
                 // https://github.com/Azure-Samples/azure-media-player-samples/blob/master/typescript/azuremediaplayer.d.ts
-                player.addEventListener(amp.eventName.downloadbitratechanged, function(){
+                player.addEventListener(amp.eventName.downloadbitratechanged, function () {
                     console.log("downloadbitratechanged");
                     currentDownloadBitrate = player.currentDownloadBitrate();
                     console.log(`Selected bitrate: ${currentDownloadBitrate}`);
-                    player.currentVideoStreamList().streams[0]._commonStream._tracks.forEach((track) => {
-                        if(track._bitrate == currentDownloadBitrate)
-                        {
-                            console.log(`Found matching bitrate: ${currentDownloadBitrate} with width ${track._width}, height ${track._height}`);
+
+                    streamTracks = player.currentVideoStreamList().streams[0]._commonStream._tracks;
+
+                    trackWidth = 0;
+                    trackHeight = 0;
+                    for (i = 0; i < streamTracks.length; i++) {
+                        if (!(streamTracks[i]._bitrate == currentDownloadBitrate)) {
+                            // Reduce nesting by checking for negated condition
+                            continue;
+                        }
+
+                        trackWidth = streamTracks[i]._width;
+                        trackHeight = streamTracks[i]._height;
+                        console.log(`Found matching bitrate: ${currentDownloadBitrate} with width ${trackWidth}, height ${trackHeight}`);
+
+                        if (trackWidth < pWidth || trackHeight < pHeight) {
+                            console.log(`[WARNING] HIGHEST_BITRATE_POSSIBLE is false; The selected bitrate is intended for a smaller player frame size!`);
                         }
                     }
-
-                    );
                 });
-                
+
                 // Listen on metadata state to extract stream frame sizes/available bitrates *after* they're available
                 // TODO: Current frame size should be readable from UI (DOM), player metadata or active stream tracks? Ask on Monday which
-                player.addEventListener(amp.eventName.loadedmetadata, function(){
+                player.addEventListener(amp.eventName.loadedmetadata, function () {
                     console.log("loadedmetadata");
                     // Beware that (...).streams array might be null/undefined, see here for elegant solution (view source):
                     // https://amp.azure.net/libs/amp/latest/samples/dynamic_selectBitrate.html
@@ -70,49 +66,47 @@
                 });
 
                 console.log(Object.keys(amp.eventName));
-
-                pWidth = player.width();
-                pHeight = player.height();
-                console.log(`Player dimensions: ${pWidth}x${pHeight}`);
-
             });
         }).call(this);
 
     </script>
 </head>
+
 <body>
 
-<video id="vid1" class="azuremediaplayer amp-default-skin" width="640" height="400">
-    <p class="amp-no-js">
-        To view this video please enable JavaScript, and consider upgrading to a web browser that supports HTML5 video
-    </p>
-</video>
-<script>
-    var myPlayer = amp('vid1', {
-                /* Options */
-                "nativeControlsForTouch": false,
-                autoplay: true,
-                controls: true,
-                width: "640",
-                height: "400",
-                techOrder: ['AzureHtml5JS'],
-                plugins: {
-                    /* load our telemetry plugin */
-                    telemetry: {
-                        /* Options */
-                    }
+    <video id="vid1" class="azuremediaplayer amp-default-skin" width="640" height="400">
+        <p class="amp-no-js">
+            To view this video please enable JavaScript, and consider upgrading to a web browser that supports HTML5
+            video
+        </p>
+    </video>
+    <script>
+        var myPlayer = amp('vid1', {
+            /* Options */
+            "nativeControlsForTouch": false,
+            autoplay: true,
+            controls: true,
+            width: "640",
+            height: "400",
+            techOrder: ['AzureHtml5JS'],
+            plugins: {
+                /* load our telemetry plugin */
+                telemetry: {
+                    /* Options */
                 }
-            }, function () {
-                console.log('Good to go!');
-                
             }
-    );
+        }, function () {
+            console.log('Good to go!');
 
-    myPlayer.src([{
-        src: "https://amssamples.streaming.mediaservices.windows.net/91492735-c523-432b-ba01-faba6c2206a2/AzureMediaServicesPromo.ism/manifest(format=mpd-time-csf)",
-        type: "application/dash+xml"
-    }]);
-</script>
+        }
+        );
+
+        myPlayer.src([{
+            src: "https://amssamples.streaming.mediaservices.windows.net/91492735-c523-432b-ba01-faba6c2206a2/AzureMediaServicesPromo.ism/manifest(format=mpd-time-csf)",
+            type: "application/dash+xml"
+        }]);
+    </script>
 
 </body>
+
 </html>
