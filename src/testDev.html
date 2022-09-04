@@ -45,6 +45,16 @@
                 // https://github.com/Azure-Samples/azure-media-player-samples/blob/master/typescript/azuremediaplayer.d.ts
                 player.addEventListener(amp.eventName.downloadbitratechanged, function(){
                     console.log("downloadbitratechanged");
+                    currentDownloadBitrate = player.currentDownloadBitrate();
+                    console.log(`Selected bitrate: ${currentDownloadBitrate}`);
+                    player.currentVideoStreamList().streams[0]._commonStream._tracks.forEach((track) => {
+                        if(track._bitrate == currentDownloadBitrate)
+                        {
+                            console.log(`Found matching bitrate: ${currentDownloadBitrate} with width ${track._width}, height ${track._height}`);
+                        }
+                    }
+
+                    );
                 });
                 
                 // Listen on metadata state to extract stream frame sizes/available bitrates *after* they're available
@@ -60,6 +70,10 @@
                 });
 
                 console.log(Object.keys(amp.eventName));
+
+                pWidth = player.width();
+                pHeight = player.height();
+                console.log(`Player dimensions: ${pWidth}x${pHeight}`);
 
             });
         }).call(this);
