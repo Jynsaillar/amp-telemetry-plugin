@@ -21,9 +21,6 @@
                 // initialize the plugin
                 init();
 
-                // For debugging - whether the Object.keys(...) reflection flood of information should be posted to the console.
-                var debugReflection = false;
-
                 // Number of bitrate changes (counter).
                 var bitrateChanges = 0;
 
@@ -31,11 +28,10 @@
                 var pWidth = 0;
                 var pHeight = 0;
 
-                // Figuring out which AMP event listeners exist in the first place and how to access them.
-                // List of events taken from here:
-                // https://github.com/Azure-Samples/azure-media-player-samples/blob/master/typescript/azuremediaplayer.d.ts
+                // Fires when the download bitrate changes -> during player initialization/stream load, also when the user manually changes the bitrate.
                 player.addEventListener(amp.eventName.downloadbitratechanged, function () {
-                    console.log("downloadbitratechanged");
+
+                    console.log("Event fired: downloadbitratechanged");
                     bitrateChanges++;
                     console.log(`Total number of bitrate changes so far: ${bitrateChanges}`);
 
@@ -46,17 +42,18 @@
                     var stream = player.currentVideoStreamList().streams ? player.currentVideoStreamList().streams[0] : undefined;
                     if (stream) {
 
-                        var streamTracks = stream._commonStream._tracks;
-
                         var pWidth = player.width();
                         var pHeight = player.height();
                         console.log(`New player dimensions: ${pWidth}x${pHeight}`);
 
+                        // Active stream track information.
+                        var streamTracks = stream._commonStream._tracks;
                         var trackWidth = 0;
                         var trackHeight = 0;
+
                         for (i = 0; i < streamTracks.length; i++) {
+                            // Reduce nesting by checking for negated condition.
                             if (!(streamTracks[i]._bitrate == currentDownloadBitrate)) {
-                                // Reduce nesting by checking for negated condition
                                 continue;
                             }
 
@@ -71,23 +68,29 @@
                     }
                 });
 
-                // Listen on metadata state to extract stream frame sizes/available bitrates *after* they're available.
-                // TODO: Current frame size should be readable from UI (DOM), player metadata or active stream tracks? Ask on Monday which.
-                player.addEventListener(amp.eventName.loadedmetadata, function () {
-                    console.log("loadedmetadata");
-                    // Beware that (...).streams array might be null/undefined, see here for elegant solution (view source):
-                    // https://amp.azure.net/libs/amp/latest/samples/dynamic_selectBitrate.html
-                    // TODO: Implement null check above.
-                    if (debugReflection) {
-                        console.log(Object.keys(player.currentVideoStreamList().streams[0]._commonStream._tracks));
-                        console.log(player.currentVideoStreamList().streams[0]._commonStream._tracks.length);
-                        player.currentVideoStreamList().streams[0]._commonStream._tracks.forEach(console.log);
-                    }
-                });
+                var bufferingTracker = {
+                    isBuffering: false,
+                    timeSpentBufferingTotal: 0,
+                    bufferingEventsTotal: 0,
+                    lastBufferingStartTimestamp: 0,
+                    lastBufferingEndTimestamp: 0,
+                    bufferingStarted: function () {
 
-                if (debugReflection) {
-                    console.log(Object.keys(amp.eventName));
+                    },
+                    bufferingEnded: function () {
+
+                    }
+
                 }
+
+                player.addEventListener(amp.eventName.waiting, function () {
+                    // Buffering probably starts here.
+                    console.log("waiting...");
+                });
+                player.addEventListener(amp.eventName.playing, function () {
+                    // Buffering should end here, *if* the player was buffering before.
+                    console.log("playing!");
+                });
             });
         }).call(this);
 
