@@ -72,8 +72,11 @@
                     isBuffering: false,
                     timeSpentBufferingTotal: 0,
                     bufferingEventsTotal: 0,
+                    shortBufferingEventsTotal: 0,
+                    longBufferingEventsTotal: 0,
                     lastBufferingStartTimestamp: 0,
                     lastBufferingEndTimestamp: 0,
+                    lastBufferingEventDurationMs: 0,
                     initialBuffer: true,
                     bufferingStarted: function () {
                         this.isBuffering = true;
@@ -83,7 +86,18 @@
                     bufferingEnded: function () {
                         this.isBuffering = false;
                         this.lastBufferingEndTimestamp = new Date().getTime();
-                        this.timeSpentBufferingTotal += Math.abs(this.lastBufferingEndTimestamp - this.lastBufferingStartTimestamp);
+                        this.lastBufferingEventDurationMs = Math.abs(this.lastBufferingEndTimestamp - this.lastBufferingStartTimestamp);
+                        this.timeSpentBufferingTotal += this.lastBufferingEventDurationMs;
+                        if (this.lastBufferingEventDurationMs > 500) {
+                            // Buffering was longer than 500ms.
+                            this.shortBufferingEventsTotal += 1;
+
+                            if (this.lastBufferingEventDurationMs > 1000) {
+                                // Buffering was longer than 1000ms = 1 second.
+                                this.longBufferingEventsTotal += 1;
+                            }
+                        }
+
                     },
                     // Not 100% sure if the waiting event fires once when the player loads initially, so this 
                     // preconfigures the bufferingTracker as if the waiting event had happened once already.
@@ -102,7 +116,6 @@
                         bufferingTracker.bufferingStarted();
                     }
 
-
                 });
                 player.addEventListener(amp.eventName.playing, function () {
                     // Buffering should end here, *if* the player was buffering before.
@@ -116,6 +129,8 @@
                         }
                     }
                     console.log(`Time spent buffering so far during ${bufferingTracker.bufferingEventsTotal} buffering events: ${bufferingTracker.timeSpentBufferingTotal}ms`);
+                    console.log(`Short buffering events: ${bufferingTracker.shortBufferingEventsTotal}`);
+                    console.log(`Critical long buffering events: ${bufferingTracker.longBufferingEventsTotal}`);
                 });
             });
         }).call(this);
