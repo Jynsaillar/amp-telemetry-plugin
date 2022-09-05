@@ -74,22 +74,48 @@
                     bufferingEventsTotal: 0,
                     lastBufferingStartTimestamp: 0,
                     lastBufferingEndTimestamp: 0,
+                    initialBuffer: true,
                     bufferingStarted: function () {
-
+                        this.isBuffering = true;
+                        this.bufferingEventsTotal++;
+                        this.lastBufferingStartTimestamp = new Date().getTime();
                     },
                     bufferingEnded: function () {
-
+                        this.isBuffering = false;
+                        this.lastBufferingEndTimestamp = new Date().getTime();
+                        this.timeSpentBufferingTotal += Math.abs(this.lastBufferingEndTimestamp - this.lastBufferingStartTimestamp);
+                    },
+                    // Not 100% sure if the waiting event fires once when the player loads initially, so this 
+                    // preconfigures the bufferingTracker as if the waiting event had happened once already.
+                    initialBuffering: function () {
+                        this.initialBuffer = false;
+                        this.bufferingEventsTotal++;
+                        this.lastBufferingStartTimestamp = new Date().getTime();
+                        this.bufferingEnded();
                     }
-
                 }
 
                 player.addEventListener(amp.eventName.waiting, function () {
                     // Buffering probably starts here.
                     console.log("waiting...");
+                    if (!bufferingTracker.isBuffering) {
+                        bufferingTracker.bufferingStarted();
+                    }
+
+
                 });
                 player.addEventListener(amp.eventName.playing, function () {
                     // Buffering should end here, *if* the player was buffering before.
                     console.log("playing!");
+                    if (bufferingTracker.initialBuffer == true) {
+                        bufferingTracker.initialBuffering();
+                    }
+                    else {
+                        if (bufferingTracker.isBuffering) {
+                            bufferingTracker.bufferingEnded();
+                        }
+                    }
+                    console.log(`Time spent buffering so far during ${bufferingTracker.bufferingEventsTotal} buffering events: ${bufferingTracker.timeSpentBufferingTotal}ms`);
                 });
             });
         }).call(this);
