@@ -21,51 +21,73 @@
                 // initialize the plugin
                 init();
 
-                pWidth = player.width();
-                pHeight = player.height();
-                console.log(`Player dimensions: ${pWidth}x${pHeight}`);
+                // For debugging - whether the Object.keys(...) reflection flood of information should be posted to the console.
+                var debugReflection = false;
 
-                // Figuring out which AMP event listeners exist in the first place and how to access them
+                // Number of bitrate changes (counter).
+                var bitrateChanges = 0;
+
+                // Player dimensions.
+                var pWidth = 0;
+                var pHeight = 0;
+
+                // Figuring out which AMP event listeners exist in the first place and how to access them.
                 // List of events taken from here:
                 // https://github.com/Azure-Samples/azure-media-player-samples/blob/master/typescript/azuremediaplayer.d.ts
                 player.addEventListener(amp.eventName.downloadbitratechanged, function () {
                     console.log("downloadbitratechanged");
-                    currentDownloadBitrate = player.currentDownloadBitrate();
+                    bitrateChanges++;
+                    console.log(`Total number of bitrate changes so far: ${bitrateChanges}`);
+
+                    var currentDownloadBitrate = player.currentDownloadBitrate();
                     console.log(`Selected bitrate: ${currentDownloadBitrate}`);
 
-                    streamTracks = player.currentVideoStreamList().streams[0]._commonStream._tracks;
+                    // Null check active player stream.
+                    var stream = player.currentVideoStreamList().streams ? player.currentVideoStreamList().streams[0] : undefined;
+                    if (stream) {
 
-                    trackWidth = 0;
-                    trackHeight = 0;
-                    for (i = 0; i < streamTracks.length; i++) {
-                        if (!(streamTracks[i]._bitrate == currentDownloadBitrate)) {
-                            // Reduce nesting by checking for negated condition
-                            continue;
-                        }
+                        var streamTracks = stream._commonStream._tracks;
 
-                        trackWidth = streamTracks[i]._width;
-                        trackHeight = streamTracks[i]._height;
-                        console.log(`Found matching bitrate: ${currentDownloadBitrate} with width ${trackWidth}, height ${trackHeight}`);
+                        var pWidth = player.width();
+                        var pHeight = player.height();
+                        console.log(`New player dimensions: ${pWidth}x${pHeight}`);
 
-                        if (trackWidth < pWidth || trackHeight < pHeight) {
-                            console.log(`[WARNING] HIGHEST_BITRATE_POSSIBLE is false; The selected bitrate is intended for a smaller player frame size!`);
+                        var trackWidth = 0;
+                        var trackHeight = 0;
+                        for (i = 0; i < streamTracks.length; i++) {
+                            if (!(streamTracks[i]._bitrate == currentDownloadBitrate)) {
+                                // Reduce nesting by checking for negated condition
+                                continue;
+                            }
+
+                            trackWidth = streamTracks[i]._width;
+                            trackHeight = streamTracks[i]._height;
+                            console.log(`Found matching bitrate: ${currentDownloadBitrate} with width ${trackWidth}, height ${trackHeight}`);
+
+                            if (trackWidth < pWidth || trackHeight < pHeight) {
+                                console.log(`[WARNING] HIGHEST_BITRATE_POSSIBLE is false; The selected bitrate is intended for a smaller player frame size!`);
+                            }
                         }
                     }
                 });
 
-                // Listen on metadata state to extract stream frame sizes/available bitrates *after* they're available
-                // TODO: Current frame size should be readable from UI (DOM), player metadata or active stream tracks? Ask on Monday which
+                // Listen on metadata state to extract stream frame sizes/available bitrates *after* they're available.
+                // TODO: Current frame size should be readable from UI (DOM), player metadata or active stream tracks? Ask on Monday which.
                 player.addEventListener(amp.eventName.loadedmetadata, function () {
                     console.log("loadedmetadata");
                     // Beware that (...).streams array might be null/undefined, see here for elegant solution (view source):
                     // https://amp.azure.net/libs/amp/latest/samples/dynamic_selectBitrate.html
-                    // TODO: Implement null check above
-                    console.log(Object.keys(player.currentVideoStreamList().streams[0]._commonStream._tracks));
-                    console.log(player.currentVideoStreamList().streams[0]._commonStream._tracks.length);
-                    player.currentVideoStreamList().streams[0]._commonStream._tracks.forEach(console.log);
+                    // TODO: Implement null check above.
+                    if (debugReflection) {
+                        console.log(Object.keys(player.currentVideoStreamList().streams[0]._commonStream._tracks));
+                        console.log(player.currentVideoStreamList().streams[0]._commonStream._tracks.length);
+                        player.currentVideoStreamList().streams[0]._commonStream._tracks.forEach(console.log);
+                    }
                 });
 
-                console.log(Object.keys(amp.eventName));
+                if (debugReflection) {
+                    console.log(Object.keys(amp.eventName));
+                }
             });
         }).call(this);
 
